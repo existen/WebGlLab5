@@ -181,7 +181,7 @@ function CreateCone(size: number)
 function CreateSphere(size : number)
 {
     var r = 0.9 * size
-    var segmentCount = 15
+    var segmentCount = 20
 
     ///
     var rings : number[][][] = []
@@ -235,6 +235,12 @@ function CreateSphere(size : number)
             //
             var xTex = 1.0 * i / (rings.length - 1)
             var yTex = 1.0 * j / (ring.length - 1)
+
+            //if (xTex == 0 || xTex == 1)
+            //{
+            //    texCoords.push(vec2(0.5, 0.5))
+            //    return;
+            //}
 
             texCoords.push(vec2(xTex, yTex))
         })

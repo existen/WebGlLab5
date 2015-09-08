@@ -134,7 +134,7 @@ function CreateCone(size) {
 }
 function CreateSphere(size) {
     var r = 0.9 * size;
-    var segmentCount = 15;
+    var segmentCount = 20;
     ///
     var rings = [];
     var deltaPhi = 180 / segmentCount; //xy plane - outer ring
@@ -171,6 +171,11 @@ function CreateSphere(size) {
             //
             var xTex = 1.0 * i / (rings.length - 1);
             var yTex = 1.0 * j / (ring.length - 1);
+            //if (xTex == 0 || xTex == 1)
+            //{
+            //    texCoords.push(vec2(0.5, 0.5))
+            //    return;
+            //}
             texCoords.push(vec2(xTex, yTex));
         });
     });
