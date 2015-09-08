@@ -213,35 +213,27 @@ function CreateSphere(size : number)
     var poleRightRing: number[][] = []
     for (var i = 0; i < rings[0].length; ++i)
     {
-        poleLeftRing.push(poleLeft)
-        poleRightRing.push(poleRight)
+        poleLeftRing.push(poleLeft.slice())
+        poleRightRing.push(poleRight.slice())
     }
 
-    rings.splice(0, 0, poleLeftRing)
-    rings.push(poleRightRing)
-
-
+    var ringsWithPoles = rings.slice()
+    ringsWithPoles.splice(0, 0, poleLeftRing)
+    ringsWithPoles.push(poleRightRing)
 
     //collect vertices
     var texCoords: number[][] = []
     var vertices: number[][] = []
 
-    rings.forEach((ring, i) =>
+    ringsWithPoles.forEach((ring, i) =>
     {
         ring.forEach((vertex, j) =>
         {
             vertices.push(vertex)
 
             //
-            var xTex = 1.0 * i / (rings.length - 1)
+            var xTex = 1.0 * i / (ringsWithPoles.length - 1)
             var yTex = 1.0 * j / (ring.length - 1)
-
-            //if (xTex == 0 || xTex == 1)
-            //{
-            //    texCoords.push(vec2(0.5, 0.5))
-            //    return;
-            //}
-
             texCoords.push(vec2(xTex, yTex))
         })
     })
@@ -256,17 +248,30 @@ function CreateSphere(size : number)
     //---------generate triangles---------
     var triangles : number[][] = []
 
+    //connect poles 
+    for (var i = 0; i < rings[0].length - 1; ++i)
+    {
+        var ringZero: any[] = rings[0]
+        var ringLast: any[] = rings[rings.length - 1]
+        triangles.push(vec3((<any>poleLeftRing[i]).index, ringZero[i].index, ringZero[i + 1].index))
+        triangles.push(vec3((<any>poleRightRing[i]).index, ringLast[i].index, ringLast[i + 1].index))
+    }
+
+    triangles.push(vec3((<any>poleLeftRing[ringZero.length - 1]).index, ringZero[ringZero.length - 1].index, ringZero[0].index))
+    triangles.push(vec3((<any>poleRightRing[ringLast.length - 1]).index, ringLast[ringLast.length - 1].index, ringLast[0].index))
+    //
+
+    //----connect rings----
     var addQuad = function (v1: number, v2: number, v3: number, v4: number)
     {
         triangles.push(vec3(v1, v2, v3))
         triangles.push(vec3(v2, v4, v3))
     }
     
-    //connect rings
     for (var i = 0; i < rings.length - 1; ++i)
     {
-        var ring1 : any = rings[i]
-        var ring2 : any = rings[i + 1]
+        var ring1: any = rings[i]
+        var ring2: any = rings[i + 1]
 
         for (var j = 0; j < ring1.length - 1; ++j)
         {

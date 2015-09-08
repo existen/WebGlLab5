@@ -157,25 +157,21 @@ function CreateSphere(size) {
     var poleLeftRing = [];
     var poleRightRing = [];
     for (var i = 0; i < rings[0].length; ++i) {
-        poleLeftRing.push(poleLeft);
-        poleRightRing.push(poleRight);
+        poleLeftRing.push(poleLeft.slice());
+        poleRightRing.push(poleRight.slice());
     }
-    rings.splice(0, 0, poleLeftRing);
-    rings.push(poleRightRing);
+    var ringsWithPoles = rings.slice();
+    ringsWithPoles.splice(0, 0, poleLeftRing);
+    ringsWithPoles.push(poleRightRing);
     //collect vertices
     var texCoords = [];
     var vertices = [];
-    rings.forEach(function (ring, i) {
+    ringsWithPoles.forEach(function (ring, i) {
         ring.forEach(function (vertex, j) {
             vertices.push(vertex);
             //
-            var xTex = 1.0 * i / (rings.length - 1);
+            var xTex = 1.0 * i / (ringsWithPoles.length - 1);
             var yTex = 1.0 * j / (ring.length - 1);
-            //if (xTex == 0 || xTex == 1)
-            //{
-            //    texCoords.push(vec2(0.5, 0.5))
-            //    return;
-            //}
             texCoords.push(vec2(xTex, yTex));
         });
     });
@@ -186,11 +182,21 @@ function CreateSphere(size) {
     });
     //---------generate triangles---------
     var triangles = [];
+    //connect poles 
+    for (var i = 0; i < rings[0].length - 1; ++i) {
+        var ringZero = rings[0];
+        var ringLast = rings[rings.length - 1];
+        triangles.push(vec3(poleLeftRing[i].index, ringZero[i].index, ringZero[i + 1].index));
+        triangles.push(vec3(poleRightRing[i].index, ringLast[i].index, ringLast[i + 1].index));
+    }
+    triangles.push(vec3(poleLeftRing[ringZero.length - 1].index, ringZero[ringZero.length - 1].index, ringZero[0].index));
+    triangles.push(vec3(poleRightRing[ringLast.length - 1].index, ringLast[ringLast.length - 1].index, ringLast[0].index));
+    //
+    //----connect rings----
     var addQuad = function (v1, v2, v3, v4) {
         triangles.push(vec3(v1, v2, v3));
         triangles.push(vec3(v2, v4, v3));
     };
-    //connect rings
     for (var i = 0; i < rings.length - 1; ++i) {
         var ring1 = rings[i];
         var ring2 = rings[i + 1];
