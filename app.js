@@ -2,6 +2,7 @@ var gl;
 var App;
 (function (App) {
     App.canvas;
+    App.image;
     App.sliderRotation = [];
     App.boxTexture;
     App.maxNumVertices = 100000;
@@ -170,7 +171,7 @@ var FigureProperties = (function () {
     function FigureProperties() {
         //defaults
         this.scale = vec3(4, 4, 4);
-        this.rotation = vec3(0, 0, 0);
+        this.rotation = vec3(0, 0, 90);
         this.position = vec3(0, 0, 0);
         ++FigureProperties.figureNumberCounter;
         this.figureNumber = FigureProperties.figureNumberCounter;
@@ -224,12 +225,21 @@ function CreateFigureOnCanvas() {
     //
     var selectedIndex = +App.boxTexture.value;
     if (selectedIndex == 2) {
-        var image = new Image();
-        image.crossOrigin = "anonymous";
-        image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
-        image.onload = function () {
-            CreateFigureEnd(image, -1, -1);
-        };
+        if (App.image != null) {
+            CreateFigureEnd(App.image, -1, -1);
+            return;
+        }
+        App.image = document.getElementById("texImage");
+        if (App.image == null) {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            App.image = new Image();
+            App.image.crossOrigin = "anonymous";
+            App.image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
+            App.image.onload = function () { return CreateFigureEnd(App.image, -1, -1); };
+        }
+        else {
+            CreateFigureEnd(App.image, -1, -1);
+        }
     }
     else {
         var image1 = GenerateChessboardImage();

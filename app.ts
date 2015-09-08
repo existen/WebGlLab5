@@ -5,6 +5,7 @@ module App
 {
     export var canvas: HTMLCanvasElement
 
+    export var image: HTMLImageElement
     export var sliderRotation: HTMLInputElement[] = []
     export var boxTexture: HTMLSelectElement
     export var maxNumVertices = 100000;
@@ -231,7 +232,7 @@ class FigureProperties
 
     //defaults
     scale: number[] = vec3(4, 4, 4)
-    rotation: number[] = vec3(0, 0, 0)
+    rotation: number[] = vec3(0, 0, 90)
     position: number[] = vec3(0, 0, 0)
 
     //for render
@@ -318,12 +319,24 @@ function CreateFigureOnCanvas()
     var selectedIndex = +App.boxTexture.value
     if (selectedIndex == 2)
     {
-        var image = new Image();
-        image.crossOrigin = "anonymous";
-        image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
-        image.onload = function()
+        if (App.image != null)
         {
-            CreateFigureEnd(image, -1, -1)
+            CreateFigureEnd(App.image, -1, -1)
+            return
+        }
+
+        App.image = <HTMLImageElement>document.getElementById("texImage")
+        if (App.image == null)
+        {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+            App.image = new Image();
+            App.image.crossOrigin = "anonymous";
+            App.image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
+            App.image.onload = () => CreateFigureEnd(App.image, -1, -1)
+        }
+        else
+        {
+            CreateFigureEnd(App.image, -1, -1)
         }
     }
     else
