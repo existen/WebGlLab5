@@ -193,7 +193,7 @@ function CreateSphere(size : number)
         var lastRing : number[][] = []
         rings.push(lastRing)
 
-        for (var theta = 0; theta < 360; theta += deltaTheta)
+        for (var theta = 0; theta <= 360; theta += deltaTheta)
         {
             var phi_ = radians(phi)
             var theta_ = radians(theta)
