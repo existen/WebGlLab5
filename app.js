@@ -3,9 +3,7 @@ var App;
     App.gl;
     App.canvas;
     App.sliderRotation = [];
-    App.sliderPosition = [];
-    App.sliderScale = [];
-    App.boxFigure;
+    App.boxTexture;
     App.maxNumVertices = 100000;
     App.indexVertices = 0;
     App.indexElements = 0;
@@ -13,8 +11,6 @@ var App;
     App.cBuffer;
     App.vBuffer;
     App.existingFigures = [];
-    App.uniformColor;
-    App.uniformColorAdder;
     App.selectedFigure;
 })(App || (App = {}));
 window.onload = function () {
@@ -27,27 +23,10 @@ window.onload = function () {
     App.sliderRotation[0] = document.getElementById("sliderRotationX");
     App.sliderRotation[1] = document.getElementById("sliderRotationY");
     App.sliderRotation[2] = document.getElementById("sliderRotationZ");
-    App.sliderPosition[0] = document.getElementById("sliderPositionX");
-    App.sliderPosition[1] = document.getElementById("sliderPositionY");
-    App.sliderPosition[2] = document.getElementById("sliderPositionZ");
-    App.sliderScale[0] = document.getElementById("sliderScaleX");
-    App.sliderScale[1] = document.getElementById("sliderScaleY");
-    App.sliderScale[2] = document.getElementById("sliderScaleZ");
-    var sliders = [App.sliderRotation[0], App.sliderRotation[1], App.sliderRotation[2],
-        App.sliderPosition[0], App.sliderPosition[1], App.sliderPosition[2],
-        App.sliderScale[0], App.sliderScale[1], App.sliderScale[2]];
+    var sliders = [App.sliderRotation[0], App.sliderRotation[1], App.sliderRotation[2]];
     sliders.forEach(function (slider) { return slider.onchange = UpdateLastFigureViaSliders; });
     //
-    var butCreate = document.getElementById("butCreate");
-    var butClear = document.getElementById("butClear");
-    App.boxFigure = document.getElementById("boxFigure");
-    butCreate.onclick = CreateFigureOnCanvas;
-    butClear.onclick = function () {
-        App.indexVertices = 0;
-        App.indexElements = 0;
-        App.existingFigures = [];
-        App.selectedFigure = null;
-    };
+    App.boxTexture = document.getElementById("boxTexture");
     //
     App.gl.viewport(0, 0, App.canvas.width, App.canvas.height);
     App.gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -58,24 +37,6 @@ var isMouseDown = false;
 var lastMousePosition = null;
 var touchedFigure = null;
 function InitGL() {
-    //create framebuffer for color
-    var texture = App.gl.createTexture();
-    checkError();
-    App.gl.bindTexture(App.gl.TEXTURE_2D, texture);
-    checkError();
-    App.gl.pixelStorei(App.gl.UNPACK_FLIP_Y_WEBGL, 1);
-    checkError();
-    App.gl.texImage2D(App.gl.TEXTURE_2D, 0, App.gl.RGBA, App.canvas.width, App.canvas.height, 0, App.gl.RGBA, App.gl.UNSIGNED_BYTE, null);
-    checkError();
-    var framebuffer = App.gl.createFramebuffer(); //Allocate a frame buffer object
-    checkError();
-    App.gl.bindFramebuffer(App.gl.FRAMEBUFFER, framebuffer);
-    checkError();
-    App.gl.framebufferTexture2D(App.gl.FRAMEBUFFER, App.gl.COLOR_ATTACHMENT0, App.gl.TEXTURE_2D, texture, 0); //Attach color buffer
-    checkError();
-    App.gl.bindFramebuffer(App.gl.FRAMEBUFFER, null);
-    checkError();
-    //
     var program = initShaders(App.gl, "vertex-shader", "fragment-shader");
     App.gl.useProgram(program);
     checkError();
@@ -102,8 +63,6 @@ function InitGL() {
     App.gl.vertexAttribPointer(vPosition, 4, App.gl.FLOAT, false, 0, 0);
     App.gl.enableVertexAttribArray(vPosition);
     checkError();
-    App.uniformColor = App.gl.getUniformLocation(program, "uColor");
-    App.uniformColorAdder = App.gl.getUniformLocation(program, "uColorAdder");
     //
     //
     var uniformProjectionMatrix = App.gl.getUniformLocation(program, "uProjectionMatrix");
@@ -116,44 +75,7 @@ function InitGL() {
     App.gl.uniformMatrix4fv(uniformMVM, false, flatten2(mvMatrix));
     checkError();
     //
-    App.canvas.onmousedown = function (event) {
-        if (event.which == 1)
-            isMouseDown = true;
-        App.gl.bindFramebuffer(App.gl.FRAMEBUFFER, framebuffer);
-        App.gl.clear(App.gl.COLOR_BUFFER_BIT);
-        render(true);
-        //
-        var x = event.offsetX;
-        var y = App.canvas.height - event.offsetY;
-        var hiddenBufferColorByte = new Uint8Array(4);
-        App.gl.readPixels(x, y, 1, 1, App.gl.RGBA, App.gl.UNSIGNED_BYTE, hiddenBufferColorByte);
-        //check color
-        var selectedFigures = App.existingFigures.filter(function (f) { return f.GetFigureNumber() == hiddenBufferColorByte[0]; });
-        App.selectedFigure = selectedFigures.length != 0 ? selectedFigures[0] : null;
-        UpdateSlidersFromSelectedFigure();
-        App.gl.bindFramebuffer(App.gl.FRAMEBUFFER, null);
-        render();
-        touchedFigure = App.selectedFigure;
-    };
-    App.canvas.onmouseup = function (event) {
-        if (event.which == 1)
-            isMouseDown = false;
-        lastMousePosition = null;
-        touchedFigure = null;
-    };
-    App.canvas.onmousemove = function (event) {
-        if (!isMouseDown || touchedFigure == null)
-            return;
-        if (lastMousePosition != null) {
-            var dx = event.offsetX - lastMousePosition.x;
-            var dy = event.offsetY - lastMousePosition.y;
-            touchedFigure.position[0] += dx * 0.01;
-            touchedFigure.position[1] += -dy * 0.01;
-            UpdateSlidersFromSelectedFigure();
-            render();
-        }
-        lastMousePosition = { x: event.offsetX, y: event.offsetY };
-    };
+    CreateFigureOnCanvas();
     render();
 }
 function DrawFigure(figure) {
@@ -205,10 +127,6 @@ function render(isUseHiddenBuffer) {
     App.existingFigures.forEach(function (figure) {
         //create vertices
         DrawFigure(figure);
-        App.gl.uniform4fv(App.uniformColor, isUseHiddenBuffer ? figure.GetHiddenBufferColor() : vec4(0, 0, 0, 0));
-        checkError();
-        App.gl.uniform4fv(App.uniformColorAdder, (!isUseHiddenBuffer && App.selectedFigure == figure) ? vec4(1, 0, 0, 0) : vec4(0, 0, 0, 0));
-        checkError();
         //last parameter - byte offset
         //second parameter - count of elements
         App.gl.drawElements(App.gl.TRIANGLES, figure.elementsLength, App.gl.UNSIGNED_SHORT, figure.elementsIndex * 2);
@@ -219,7 +137,7 @@ function render(isUseHiddenBuffer) {
 var FigureProperties = (function () {
     function FigureProperties() {
         //defaults
-        this.scale = vec3(2, 2, 2);
+        this.scale = vec3(4, 4, 4);
         this.rotation = vec3(30, 30, 30);
         this.position = vec3(0, 0, 0);
         ++FigureProperties.figureNumberCounter;
@@ -257,17 +175,13 @@ var FigureProperties = (function () {
 function UpdateLastFigureViaSliders() {
     if (App.selectedFigure == null)
         return;
-    App.selectedFigure.position = vec3(+App.sliderPosition[0].value, +App.sliderPosition[1].value, +App.sliderPosition[2].value);
     App.selectedFigure.rotation = vec3(+App.sliderRotation[0].value, +App.sliderRotation[1].value, +App.sliderRotation[2].value);
-    App.selectedFigure.scale = vec3(+App.sliderScale[0].value, +App.sliderScale[1].value, +App.sliderScale[2].value);
     render();
 }
 function UpdateSlidersFromSelectedFigure() {
     var selectedFigure = App.selectedFigure != null ? App.selectedFigure : new FigureProperties(); //defaults
     for (var i = 0; i < 3; ++i) {
-        App.sliderPosition[i].value = String(selectedFigure.position[i]);
         App.sliderRotation[i].value = String(selectedFigure.rotation[i]);
-        App.sliderScale[i].value = String(selectedFigure.scale[i]);
     }
 }
 function CreateFigureOnCanvas() {
@@ -276,37 +190,13 @@ function CreateFigureOnCanvas() {
     App.existingFigures.push(figureProps);
     App.selectedFigure = figureProps;
     UpdateSlidersFromSelectedFigure();
-    //var sizeFactor = 0.2  //unit size
-    //var position = vec3(+sliderPosition[0].value, +sliderPosition[1].value, +sliderPosition[2].value)
-    //var rotation = vec3(+sliderRotation[0].value, +sliderRotation[1].value, +sliderRotation[2].value)
-    //var scale = vec3(+sliderScale[0].value, +sliderScale[1].value, +sliderScale[2].value)
-    ////MVM
-    //var matScale = scaleMat(scale[0] * sizeFactor, scale[1] * sizeFactor, scale[2] * sizeFactor)
-    //var matRotationX = rotateX(rotation[0])
-    //var matRotationY = rotateY(rotation[1])
-    //var matRotationZ = rotateZ(rotation[2])
-    //var matPosition = translate(position[0] * sizeFactor, position[1] * sizeFactor, position[2] * sizeFactor)
-    //var mv = multArray(matPosition, matRotationZ, matRotationY, matRotationX, matScale)
     //create figure
-    var figureIndex = +App.boxFigure.value;
-    var createFigure = [];
-    createFigure[0] = CreateSphere;
-    createFigure[1] = CreateCylinder;
-    createFigure[2] = CreateCone;
-    createFigure[3] = CreateCube;
-    var figure = createFigure[figureIndex](1.0);
+    var figure = CreateSphere(1.0);
     var vertices = figure.vertices;
     var triangles = figure.triangles;
     figureProps.verticesPositions = vertices;
     figureProps.triangles = triangles;
     figureProps.verticesColors = GetColorsArray(figureProps.verticesPositions.length);
-    //
-    //for (var i = 0; i < vertices.length; ++i)
-    //{
-    //    vertices[i] = multVectorWithMatrix(mv, vertices[i])
-    //}
-    ////
-    //DrawFigure(figure)
     render();
 }
 //# sourceMappingURL=app.js.map

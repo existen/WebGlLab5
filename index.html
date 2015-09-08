@@ -20,20 +20,10 @@
     <script id="fragment-shader" type="x-shader/x-fragment">
         precision mediump float;
         varying vec4 fColor;
-        uniform vec4 uColor;
-        uniform vec4 uColorAdder;
 
         void main()
         {
-            if (uColor.a > 0.0)
-            {
-                gl_FragColor = uColor;
-            }
-            else
-            {
-                gl_FragColor = fColor;
-                gl_FragColor += uColorAdder;
-            }
+            gl_FragColor = fColor;
         }
     </script>
     <script type="text/javascript" src="webgl-utils.js"></script>
@@ -57,29 +47,17 @@
             </td>
             <td>
                 <div>
-                    Figure
-                    <select id="boxFigure">
-                        <option value="0">Sphere</option>
-                        <option value="1">Cylinder</option>
-                        <option value="2" selected="selected">Cone</option>
-                        <option value="3">Cube</option>
+                    Texture
+                    <select id="boxTexture">
+                        <option value="0" selected="selected">Chessboard procedural</option>
+                        <option value="1">Chessboard procedural - planar mapping</option>
+                        <option value="2">Image - from file</option>
                     </select>
                 </div>
 
                 <div><label>RotationX&nbsp;&nbsp;</label><label id="labRotationX" hidden="hidden"></label><input id="sliderRotationX" type="range" min="0" max="360" step="1" value="30" /></div>
                 <div><label>RotationY&nbsp;&nbsp;</label><label id="labRotationY" hidden="hidden"></label><input id="sliderRotationY" type="range" min="0" max="360" step="1" value="30" /></div>
                 <div><label>RotationZ&nbsp;&nbsp;</label><label id="labRotationZ" hidden="hidden"></label><input id="sliderRotationZ" type="range" min="0" max="360" step="1" value="0" /></div>
-
-                <div><label>PositionX&nbsp;&nbsp;</label><label id="labPositionX" hidden="hidden"></label><input id="sliderPositionX" type="range" min="-5" max="5" step="0.1" value="0" /></div>
-                <div><label>PositionY&nbsp;&nbsp;</label><label id="labPositionY" hidden="hidden"></label><input id="sliderPositionY" type="range" min="-5" max="5" step="0.1" value="0" /></div>
-                <div><label>PositionZ&nbsp;&nbsp;</label><label id="labPositionZ" hidden="hidden"></label><input id="sliderPositionZ" type="range" min="-5" max="5" step="0.1" value="0" /></div>
-
-                <div><label>ScaleX&nbsp;&nbsp;</label><label id="labScaleX" hidden="hidden"></label><input id="sliderScaleX" type="range" min="0.1" max="5" step="0.1" value="2" /></div>
-                <div><label>ScaleY&nbsp;&nbsp;</label><label id="labScaleY" hidden="hidden"></label><input id="sliderScaleY" type="range" min="0.1" max="5" step="0.1" value="2" /></div>
-                <div><label>ScaleZ&nbsp;&nbsp;</label><label id="labScaleZ" hidden="hidden"></label><input id="sliderScaleZ" type="range" min="0.1" max="5" step="0.1" value="2" /></div>
-
-                <div><button id="butCreate">Create</button></div>
-                <div><button id="butClear">Clear</button></div>
             </td>
         </tr>
     </table>
