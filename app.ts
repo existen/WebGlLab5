@@ -317,11 +317,12 @@ function CreateFigureOnCanvas()
     //
 
     var selectedIndex = +App.boxTexture.value
-    if (selectedIndex == 2)
+    if (selectedIndex == 2 || selectedIndex == 3)
     {
+        var isPlanarMapping = selectedIndex == 3
         if (App.image != null)
         {
-            CreateFigureEnd(App.image, -1, -1, false)
+            CreateFigureEnd(App.image, -1, -1, isPlanarMapping)
             return
         }
 
@@ -332,11 +333,11 @@ function CreateFigureOnCanvas()
             App.image = new Image();
             App.image.crossOrigin = "anonymous";
             App.image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
-            App.image.onload = () => CreateFigureEnd(App.image, -1, -1, false)
+            App.image.onload = () => CreateFigureEnd(App.image, -1, -1, isPlanarMapping)
         }
         else
         {
-            CreateFigureEnd(App.image, -1, -1, false)
+            CreateFigureEnd(App.image, -1, -1, isPlanarMapping)
         }
     }
     else if (selectedIndex == 0 || selectedIndex == 1)
