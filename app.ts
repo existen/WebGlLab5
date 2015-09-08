@@ -153,18 +153,22 @@ function DrawFigure(figure: FigureProperties)
     }
     //
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, App.vBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figureVertices));    
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vBuffer)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figureVertices))
     checkError()
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, App.cBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figure.verticesColors));
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.cBuffer)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figure.verticesColors))
     checkError()
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
-    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 2 * App.indexElements, new Uint16Array(indices));
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vTexCoord)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 8 * App.indexVertices, flatten2(figure.texCoords))
     checkError()
-    
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, App.iBuffer)
+    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 2 * App.indexElements, new Uint16Array(indices))
+    checkError()    
+
     figure.elementsIndex = App.indexElements
     figure.elementsLength = indices.length
 
@@ -223,13 +227,14 @@ class FigureProperties
 
     //defaults
     scale: number[] = vec3(4, 4, 4)
-    rotation: number[] = vec3(30, 30, 30)
+    rotation: number[] = vec3(0, 0, 0)
     position: number[] = vec3(0, 0, 0)
 
     //for render
     verticesPositions: number[][]
     verticesColors: number[][]
     triangles: number[][]
+    texCoords: number[][]
 
     elementsIndex: number
     elementsLength: number
@@ -312,11 +317,9 @@ function CreateFigureOnCanvas()
     //create figure
     var figure = CreateSphere(1.0)
 
-    var vertices = <number[][]>figure.vertices
-    var triangles = <number[][]>figure.triangles
-
-    figureProps.verticesPositions = vertices
-    figureProps.triangles = triangles
+    figureProps.verticesPositions = figure.vertices
+    figureProps.texCoords = figure.texCoords
+    figureProps.triangles = figure.triangles
     figureProps.verticesColors = GetColorsArray(figureProps.verticesPositions.length)
 
     render()

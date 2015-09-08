@@ -119,6 +119,9 @@ function DrawFigure(figure) {
     gl.bindBuffer(gl.ARRAY_BUFFER, App.cBuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figure.verticesColors));
     checkError();
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vTexCoord);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 8 * App.indexVertices, flatten2(figure.texCoords));
+    checkError();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
     gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 2 * App.indexElements, new Uint16Array(indices));
     checkError();
@@ -165,7 +168,7 @@ var FigureProperties = (function () {
     function FigureProperties() {
         //defaults
         this.scale = vec3(4, 4, 4);
-        this.rotation = vec3(30, 30, 30);
+        this.rotation = vec3(0, 0, 0);
         this.position = vec3(0, 0, 0);
         ++FigureProperties.figureNumberCounter;
         this.figureNumber = FigureProperties.figureNumberCounter;
@@ -220,10 +223,9 @@ function CreateFigureOnCanvas() {
     UpdateSlidersFromSelectedFigure();
     //create figure
     var figure = CreateSphere(1.0);
-    var vertices = figure.vertices;
-    var triangles = figure.triangles;
-    figureProps.verticesPositions = vertices;
-    figureProps.triangles = triangles;
+    figureProps.verticesPositions = figure.vertices;
+    figureProps.texCoords = figure.texCoords;
+    figureProps.triangles = figure.triangles;
     figureProps.verticesColors = GetColorsArray(figureProps.verticesPositions.length);
     render();
 }

@@ -154,14 +154,21 @@ function CreateSphere(size) {
     var poleLeft = vec4(-r, 0, 0, 1);
     var poleRight = vec4(r, 0, 0, 1);
     //collect vertices
+    var texCoords = [];
     var vertices = [];
     vertices.push(poleLeft);
-    rings.forEach(function (ring) {
-        ring.forEach(function (vertex) {
+    texCoords.push(vec2(0, 0.5));
+    rings.forEach(function (ring, i) {
+        ring.forEach(function (vertex, j) {
             vertices.push(vertex);
+            //
+            var xTex = 1.0 * (i + 1) / (rings.length - 1 + 2);
+            var yTex = 1.0 * j / (ring.length - 1);
+            texCoords.push(vec2(xTex, yTex));
         });
     });
     vertices.push(poleRight);
+    texCoords.push(vec2(1, 0.5));
     //indexes
     var currentIndex = -1;
     vertices.forEach(function (vertex) {
@@ -191,9 +198,11 @@ function CreateSphere(size) {
         }
         addQuad(ring1[ring1.length - 1].index, ring1[0].index, ring2[ring1.length - 1].index, ring2[0].index);
     }
+    //---------
     var result = {
         triangles: triangles,
         vertices: vertices,
+        texCoords: texCoords
     };
     return result;
 }

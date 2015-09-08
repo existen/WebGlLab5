@@ -209,16 +209,26 @@ function CreateSphere(size : number)
     var poleRight = <any>vec4(r, 0, 0, 1)
 
     //collect vertices
-    var vertices : number[][] = []
+    var texCoords: number[][] = []
+    var vertices: number[][] = []
+
     vertices.push(poleLeft)
-    rings.forEach(ring =>
+    texCoords.push(vec2(0, 0.5))
+
+    rings.forEach((ring, i) =>
     {
-        ring.forEach(vertex =>
+        ring.forEach((vertex, j) =>
         {
             vertices.push(vertex)
+
+            //
+            var xTex = 1.0 * (i + 1) / (rings.length - 1 + 2)
+            var yTex = 1.0 * j / (ring.length - 1)
+            texCoords.push(vec2(xTex, yTex))
         })
     })
     vertices.push(poleRight)
+    texCoords.push(vec2(1, 0.5))
 
     //indexes
     var currentIndex = -1
@@ -261,9 +271,12 @@ function CreateSphere(size : number)
         addQuad(ring1[ring1.length - 1].index, ring1[0].index, ring2[ring1.length - 1].index, ring2[0].index)
     }
 
+    //---------
+
     var result = {
         triangles : triangles,
-        vertices: vertices,
+        vertices : vertices,
+        texCoords : texCoords
     }
 
     return result    

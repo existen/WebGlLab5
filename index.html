@@ -31,8 +31,8 @@
 
         void main()
         {
-            gl_FragColor = fColor;
-            //gl_FragColor = texture2D(texture, fTexCoord);
+            //gl_FragColor = fColor;
+            gl_FragColor = texture2D(texture, fTexCoord);
         }
     </script>
     <script type="text/javascript" src="webgl-utils.js"></script>
@@ -64,8 +64,8 @@
                     </select>
                 </div>
 
-                <div><label>RotationX&nbsp;&nbsp;</label><label id="labRotationX" hidden="hidden"></label><input id="sliderRotationX" type="range" min="0" max="360" step="1" value="30" /></div>
-                <div><label>RotationY&nbsp;&nbsp;</label><label id="labRotationY" hidden="hidden"></label><input id="sliderRotationY" type="range" min="0" max="360" step="1" value="30" /></div>
+                <div><label>RotationX&nbsp;&nbsp;</label><label id="labRotationX" hidden="hidden"></label><input id="sliderRotationX" type="range" min="0" max="360" step="1" value="0" /></div>
+                <div><label>RotationY&nbsp;&nbsp;</label><label id="labRotationY" hidden="hidden"></label><input id="sliderRotationY" type="range" min="0" max="360" step="1" value="0" /></div>
                 <div><label>RotationZ&nbsp;&nbsp;</label><label id="labRotationZ" hidden="hidden"></label><input id="sliderRotationZ" type="range" min="0" max="360" step="1" value="0" /></div>
             </td>
         </tr>
