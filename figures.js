@@ -132,7 +132,7 @@ function CreateCone(size) {
     };
     return result;
 }
-function CreateSphere(size) {
+function CreateSphere(size, isUsePlanarMapping) {
     var r = 0.9 * size;
     var segmentCount = 20;
     ///
@@ -170,9 +170,17 @@ function CreateSphere(size) {
         ring.forEach(function (vertex, j) {
             vertices.push(vertex);
             //
-            var xTex = 1.0 * i / (ringsWithPoles.length - 1);
-            var yTex = 1.0 * j / (ring.length - 1);
-            texCoords.push(vec2(xTex, yTex));
+            var texCoord = vec2();
+            if (isUsePlanarMapping) {
+                //http://escience.anu.edu.au/lecture/cg/Texture/coordinateGeneration2.en.html
+                texCoord[0] = ((vertex[0] / 0.9) + 1.0) * 0.5;
+                texCoord[1] = ((vertex[1] / 0.9) + 1.0) * 0.5;
+            }
+            else {
+                texCoord[0] = 1.0 * i / (ringsWithPoles.length - 1);
+                texCoord[1] = 1.0 * j / (ring.length - 1);
+            }
+            texCoords.push(texCoord);
         });
     });
     //indexes

@@ -113,12 +113,12 @@ function InitGL()
 function GenerateChessboardImage()
 {
     var texSize = 64
-    var cellSize = 8
+    //var cellSize = 8
 
     var image = new Uint8Array(4 * texSize * texSize);
     for (var i = 0; i < texSize; ++i) {
         for (var j = 0; j < texSize; ++j) {
-            var color = (((i & 0x8) == 0) ? 1 : 0) ^ (((j & 0x8) == 0) ? 1 : 0);
+            var color = (((i & 0x4) == 0) ? 1 : 0) ^ (((j & 0x4) == 0) ? 1 : 0);
             var arrayIndex = 4 * (texSize * i + j)
             image[arrayIndex] = image[arrayIndex + 1] = image[arrayIndex + 2] = color * 255
             image[arrayIndex + 3] = 255
@@ -321,7 +321,7 @@ function CreateFigureOnCanvas()
     {
         if (App.image != null)
         {
-            CreateFigureEnd(App.image, -1, -1)
+            CreateFigureEnd(App.image, -1, -1, false)
             return
         }
 
@@ -332,22 +332,22 @@ function CreateFigureOnCanvas()
             App.image = new Image();
             App.image.crossOrigin = "anonymous";
             App.image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
-            App.image.onload = () => CreateFigureEnd(App.image, -1, -1)
+            App.image.onload = () => CreateFigureEnd(App.image, -1, -1, false)
         }
         else
         {
-            CreateFigureEnd(App.image, -1, -1)
+            CreateFigureEnd(App.image, -1, -1, false)
         }
     }
-    else
+    else if (selectedIndex == 0 || selectedIndex == 1)
     {
         var image1 = GenerateChessboardImage()
-        CreateFigureEnd(image1.image, image1.width, image1.height)
+        CreateFigureEnd(image1.image, image1.width, image1.height, selectedIndex == 1)
     }
 
 }
 
-function CreateFigureEnd(image: any, width: number, height: number)
+function CreateFigureEnd(image: any, width: number, height: number, isPlanarMapping: boolean)
 {
     ConfigureTexture(image, width, height)
 
@@ -358,7 +358,7 @@ function CreateFigureEnd(image: any, width: number, height: number)
     UpdateSlidersFromSelectedFigure()
 
     //create figure
-    var figure = CreateSphere(1.0)
+    var figure = CreateSphere(1.0, isPlanarMapping)
 
     figureProps.verticesPositions = figure.vertices
     figureProps.texCoords = figure.texCoords
