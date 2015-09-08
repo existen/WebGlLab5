@@ -235,7 +235,7 @@ function CreateFigureOnCanvas() {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             App.image = new Image();
             App.image.crossOrigin = "anonymous";
-            App.image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
+            App.image.src = "stones_texture.jpg";
             App.image.onload = function () { return CreateFigureEnd(App.image, -1, -1, isPlanarMapping); };
         }
         else {
