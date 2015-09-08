@@ -35,6 +35,7 @@ window.onload = () => {
     var sliders = [App.sliderRotation[0], App.sliderRotation[1], App.sliderRotation[2]]
     sliders.forEach(slider => slider.onchange = UpdateLastFigureViaSliders)
     App.boxTexture = <HTMLSelectElement>document.getElementById("boxTexture")
+    App.boxTexture.onchange = CreateFigureOnCanvas
 
     gl.viewport(0, 0, App.canvas.width, App.canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -105,7 +106,6 @@ function InitGL()
     //
 
     CreateFigureOnCanvas()
-    render()
 }
 
 
@@ -127,13 +127,18 @@ function GenerateChessboardImage()
     return { image, width : texSize, height : texSize }
 }
 
-function ConfigureTexture(image: Uint8Array, width : number, height : number)
+function ConfigureTexture(image: any, width: number, height: number)
 {
     var texture = gl.createTexture()
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image)
+
+    if (width == -1)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, <HTMLImageElement>image)
+    else
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image)
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 }
@@ -304,8 +309,34 @@ function UpdateSlidersFromSelectedFigure()
 
 function CreateFigureOnCanvas()
 {
-    var image = GenerateChessboardImage()
-    ConfigureTexture(image.image, image.width, image.height)
+    //clear figure
+    App.indexVertices = 0
+    App.indexElements = 0
+    App.selectedFigure = null
+    //
+
+    var selectedIndex = +App.boxTexture.value
+    if (selectedIndex == 2)
+    {
+        var image = new Image();
+        image.crossOrigin = "anonymous";
+        image.src = "https://s3.amazonaws.com/glowscript/textures/stones_texture.jpg";
+        image.onload = function()
+        {
+            CreateFigureEnd(image, -1, -1)
+        }
+    }
+    else
+    {
+        var image1 = GenerateChessboardImage()
+        CreateFigureEnd(image1.image, image1.width, image1.height)
+    }
+
+}
+
+function CreateFigureEnd(image: any, width: number, height: number)
+{
+    ConfigureTexture(image, width, height)
 
     //set slider to defaults
     var figureProps = new FigureProperties()
@@ -323,4 +354,3 @@ function CreateFigureOnCanvas()
 
     render()
 }
-

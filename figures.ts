@@ -205,15 +205,26 @@ function CreateSphere(size : number)
         }
     }
 
-    var poleLeft = <any>vec4(-r, 0, 0, 1);
-    var poleRight = <any>vec4(r, 0, 0, 1)
+    //------------insert poleLeft and poleRight ring----------------
+    var poleLeft = vec4(-r, 0, 0, 1)
+    var poleRight = vec4(r, 0, 0, 1)
+
+    var poleLeftRing: number[][] = []
+    var poleRightRing: number[][] = []
+    for (var i = 0; i < rings[0].length; ++i)
+    {
+        poleLeftRing.push(poleLeft)
+        poleRightRing.push(poleRight)
+    }
+
+    rings.splice(0, 0, poleLeftRing)
+    rings.push(poleRightRing)
+
+
 
     //collect vertices
     var texCoords: number[][] = []
     var vertices: number[][] = []
-
-    vertices.push(poleLeft)
-    texCoords.push(vec2(0, 0.5))
 
     rings.forEach((ring, i) =>
     {
@@ -222,13 +233,12 @@ function CreateSphere(size : number)
             vertices.push(vertex)
 
             //
-            var xTex = 1.0 * (i + 1) / (rings.length - 1 + 2)
+            var xTex = 1.0 * i / (rings.length - 1)
             var yTex = 1.0 * j / (ring.length - 1)
+
             texCoords.push(vec2(xTex, yTex))
         })
     })
-    vertices.push(poleRight)
-    texCoords.push(vec2(1, 0.5))
 
     //indexes
     var currentIndex = -1
@@ -239,17 +249,6 @@ function CreateSphere(size : number)
 
     //---------generate triangles---------
     var triangles : number[][] = []
-    //connect poles 
-    for (var i = 0; i < rings[0].length - 1; ++i)
-    {
-        var ringZero: any[] = rings[0]
-        var ringLast: any[] = rings[rings.length - 1]
-        triangles.push(vec3(poleLeft.index, ringZero[i].index, ringZero[i + 1].index))
-        triangles.push(vec3(poleRight.index, ringLast[i].index, ringLast[i + 1].index))
-    }
-
-    triangles.push(vec3(poleLeft.index, ringZero[ringZero.length - 1].index, ringZero[0].index))
-    triangles.push(vec3(poleRight.index, ringLast[ringLast.length - 1].index, ringLast[0].index))
 
     var addQuad = function (v1: number, v2: number, v3: number, v4: number)
     {

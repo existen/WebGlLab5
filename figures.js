@@ -151,24 +151,29 @@ function CreateSphere(size) {
             lastRing.push(vec4(x, y, z, 1));
         }
     }
+    //------------insert poleLeft and poleRight ring----------------
     var poleLeft = vec4(-r, 0, 0, 1);
     var poleRight = vec4(r, 0, 0, 1);
+    var poleLeftRing = [];
+    var poleRightRing = [];
+    for (var i = 0; i < rings[0].length; ++i) {
+        poleLeftRing.push(poleLeft);
+        poleRightRing.push(poleRight);
+    }
+    rings.splice(0, 0, poleLeftRing);
+    rings.push(poleRightRing);
     //collect vertices
     var texCoords = [];
     var vertices = [];
-    vertices.push(poleLeft);
-    texCoords.push(vec2(0, 0.5));
     rings.forEach(function (ring, i) {
         ring.forEach(function (vertex, j) {
             vertices.push(vertex);
             //
-            var xTex = 1.0 * (i + 1) / (rings.length - 1 + 2);
+            var xTex = 1.0 * i / (rings.length - 1);
             var yTex = 1.0 * j / (ring.length - 1);
             texCoords.push(vec2(xTex, yTex));
         });
     });
-    vertices.push(poleRight);
-    texCoords.push(vec2(1, 0.5));
     //indexes
     var currentIndex = -1;
     vertices.forEach(function (vertex) {
@@ -176,15 +181,6 @@ function CreateSphere(size) {
     });
     //---------generate triangles---------
     var triangles = [];
-    //connect poles 
-    for (var i = 0; i < rings[0].length - 1; ++i) {
-        var ringZero = rings[0];
-        var ringLast = rings[rings.length - 1];
-        triangles.push(vec3(poleLeft.index, ringZero[i].index, ringZero[i + 1].index));
-        triangles.push(vec3(poleRight.index, ringLast[i].index, ringLast[i + 1].index));
-    }
-    triangles.push(vec3(poleLeft.index, ringZero[ringZero.length - 1].index, ringZero[0].index));
-    triangles.push(vec3(poleRight.index, ringLast[ringLast.length - 1].index, ringLast[0].index));
     var addQuad = function (v1, v2, v3, v4) {
         triangles.push(vec3(v1, v2, v3));
         triangles.push(vec3(v2, v4, v3));
