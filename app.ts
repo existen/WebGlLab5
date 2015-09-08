@@ -1,7 +1,8 @@
 ﻿
+var gl: WebGLRenderingContext
+
 module App
 {
-    export var gl: WebGLRenderingContext
     export var canvas: HTMLCanvasElement
 
     export var sliderRotation: HTMLInputElement[] = []
@@ -12,16 +13,16 @@ module App
     export var iBuffer: WebGLBuffer
     export var cBuffer: WebGLBuffer
     export var vBuffer: WebGLBuffer
+    export var vTexCoord: WebGLBuffer
 
-    export var existingFigures: FigureProperties[] = []
     export var selectedFigure: FigureProperties
 }
 
 window.onload = () => {
 
     App.canvas = <HTMLCanvasElement>document.getElementById("gl-canvas");
-    App.gl = setupWebGL(App.canvas);
-    if (!App.gl)
+    gl = setupWebGL(App.canvas);
+    if (!gl)
     {
         alert("WebGL isn't available");
     }
@@ -32,74 +33,74 @@ window.onload = () => {
     App.sliderRotation[2] = <HTMLInputElement>document.getElementById("sliderRotationZ")
 
     var sliders = [App.sliderRotation[0], App.sliderRotation[1], App.sliderRotation[2]]
-
     sliders.forEach(slider => slider.onchange = UpdateLastFigureViaSliders)
-
-    //
     App.boxTexture = <HTMLSelectElement>document.getElementById("boxTexture")
-    //
 
-
-    App.gl.viewport(0, 0, App.canvas.width, App.canvas.height);
-    App.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    App.gl.enable(App.gl.DEPTH_TEST);
+    gl.viewport(0, 0, App.canvas.width, App.canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
 
     InitGL()
 }
 
-var isMouseDown = false
-var lastMousePosition = null
-var touchedFigure = null
-
 
 function InitGL()
 {
-    var program = initShaders(App.gl, "vertex-shader", "fragment-shader");
-    App.gl.useProgram(program);
+    var program = initShaders(gl, "vertex-shader", "fragment-shader");
+    gl.useProgram(program);
     checkError()
 
-    // array element buffer
-    App.iBuffer = App.gl.createBuffer();
-    App.gl.bindBuffer(App.gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
-    App.gl.bufferData(App.gl.ELEMENT_ARRAY_BUFFER, App.maxNumVertices, App.gl.STATIC_DRAW);
+    //-------------array element buffer------------------------
+    App.iBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, App.maxNumVertices, gl.STATIC_DRAW);
     checkError()
 
-    //color array atrribute buffer
-    App.cBuffer = App.gl.createBuffer();
-    App.gl.bindBuffer(App.gl.ARRAY_BUFFER, App.cBuffer);
-    App.gl.bufferData(App.gl.ARRAY_BUFFER, App.maxNumVertices, App.gl.STATIC_DRAW);
+    //-------------color array atrribute buffer----------------
+    App.cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, App.maxNumVertices, gl.STATIC_DRAW);
     checkError()
 
-    var vColor = App.gl.getAttribLocation(program, "vColor");
-    App.gl.vertexAttribPointer(vColor, 4, App.gl.FLOAT, false, 0, 0);
-    App.gl.enableVertexAttribArray(vColor);
+    var vColor = gl.getAttribLocation(program, "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vColor);
     checkError()
 
-    //vertex array attribute buffer
-    App.vBuffer = App.gl.createBuffer();
-    App.gl.bindBuffer(App.gl.ARRAY_BUFFER, App.vBuffer);
-    App.gl.bufferData(App.gl.ARRAY_BUFFER, App.maxNumVertices, App.gl.STATIC_DRAW);
+    //-------------vertex array attribute buffer------------
+    App.vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, App.maxNumVertices, gl.STATIC_DRAW);
     checkError()
 
-    var vPosition = App.gl.getAttribLocation(program, "vPosition");
-    App.gl.vertexAttribPointer(vPosition, 4, App.gl.FLOAT, false, 0, 0);
-    App.gl.enableVertexAttribArray(vPosition);
+    var vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
     checkError()
 
+    //-----------tex coord attrubute buffer-----------------
+    App.vTexCoord = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vTexCoord);
+    gl.bufferData(gl.ARRAY_BUFFER, App.maxNumVertices, gl.STATIC_DRAW);
+    checkError()
+
+    var vTexCoord = gl.getAttribLocation(program, "vTexCoord");
+    gl.vertexAttribPointer(vTexCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vTexCoord);
+    checkError()
     //
-    //
 
-    var uniformProjectionMatrix = App.gl.getUniformLocation(program, "uProjectionMatrix")
-    var uniformMVM = App.gl.getUniformLocation(program, "uModelViewMatrix")
+    var uniformProjectionMatrix = gl.getUniformLocation(program, "uProjectionMatrix")
+    var uniformMVM = gl.getUniformLocation(program, "uModelViewMatrix")
 
     //set projection matrix
     var projectionMatrix = ortho(-1, 1, -1, 1, -100, 100);
     var mvMatrix = mat4()
 
-    App.gl.uniformMatrix4fv(uniformProjectionMatrix, false, flatten2(projectionMatrix));
+    gl.uniformMatrix4fv(uniformProjectionMatrix, false, flatten2(projectionMatrix));
     checkError()
 
-    App.gl.uniformMatrix4fv(uniformMVM, false, flatten2(mvMatrix));
+    gl.uniformMatrix4fv(uniformMVM, false, flatten2(mvMatrix));
     checkError()
     //
 
@@ -107,6 +108,36 @@ function InitGL()
     render()
 }
 
+
+function GenerateChessboardImage()
+{
+    var texSize = 64
+    var cellSize = 8
+
+    var image = new Uint8Array(4 * texSize * texSize);
+    for (var i = 0; i < texSize; ++i) {
+        for (var j = 0; j < texSize; ++j) {
+            var color = (((i & 0x8) == 0) ? 1 : 0) ^ (((j & 0x8) == 0) ? 1 : 0);
+            var arrayIndex = 4 * (texSize * i + j)
+            image[arrayIndex] = image[arrayIndex + 1] = image[arrayIndex + 2] = color * 255
+            image[arrayIndex + 3] = 255
+        }
+    }
+
+    return { image, width : texSize, height : texSize }
+}
+
+function ConfigureTexture(image: Uint8Array, width : number, height : number)
+{
+    var texture = gl.createTexture()
+    gl.activeTexture(gl.TEXTURE0)
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image)
+    gl.generateMipmap(gl.TEXTURE_2D)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+}
 
 
 function DrawFigure(figure: FigureProperties)
@@ -122,16 +153,16 @@ function DrawFigure(figure: FigureProperties)
     }
     //
 
-    App.gl.bindBuffer(App.gl.ARRAY_BUFFER, App.vBuffer);
-    App.gl.bufferSubData(App.gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figureVertices));    
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.vBuffer);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figureVertices));    
     checkError()
 
-    App.gl.bindBuffer(App.gl.ARRAY_BUFFER, App.cBuffer);
-    App.gl.bufferSubData(App.gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figure.verticesColors));
+    gl.bindBuffer(gl.ARRAY_BUFFER, App.cBuffer);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 16 * App.indexVertices, flatten2(figure.verticesColors));
     checkError()
 
-    App.gl.bindBuffer(App.gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
-    App.gl.bufferSubData(App.gl.ELEMENT_ARRAY_BUFFER, 2 * App.indexElements, new Uint16Array(indices));
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, App.iBuffer);
+    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 2 * App.indexElements, new Uint16Array(indices));
     checkError()
     
     figure.elementsIndex = App.indexElements
@@ -143,26 +174,26 @@ function DrawFigure(figure: FigureProperties)
 
 function checkError()
 {
-    var err = App.gl.getError()
+    var err = gl.getError()
     if (err != 0)
     {
-        if (err == App.gl.INVALID_OPERATION)
+        if (err == gl.INVALID_OPERATION)
             alert("INVALID_OPERATION")
-        else if (err == App.gl.INVALID_ENUM)
+        else if (err == gl.INVALID_ENUM)
             alert("INVALID_ENUM")
-        else if (err == App.gl.INVALID_FRAMEBUFFER_OPERATION)
+        else if (err == gl.INVALID_FRAMEBUFFER_OPERATION)
             alert("INVALID_FRAMEBUFFER_OPERATION")
-        else if (err == App.gl.INVALID_VALUE)
+        else if (err == gl.INVALID_VALUE)
             alert("INVALID_VALUE")
         else
             alert("XXX")
     }
 }
 
-function render(isUseHiddenBuffer = false)
+function render()
 {
     //rotate square 3 choices: in CPU, in GPU send angle, in GPU send MVM
-    App.gl.clear(App.gl.COLOR_BUFFER_BIT | App.gl.DEPTH_BUFFER_BIT)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     //draw in one draw call!
     //gl.drawElements(gl.TRIANGLES, indexElements, gl.UNSIGNED_SHORT, 0) //gl.LINE_LOOP
@@ -171,16 +202,16 @@ function render(isUseHiddenBuffer = false)
     App.indexVertices = 0
     App.indexElements = 0
 
-    App.existingFigures.forEach(figure =>
+    var figure = App.selectedFigure      
     {
         //create vertices
         DrawFigure(figure)
 
         //last parameter - byte offset
         //second parameter - count of elements
-        App.gl.drawElements(App.gl.TRIANGLES, figure.elementsLength, App.gl.UNSIGNED_SHORT, figure.elementsIndex * 2)
+        gl.drawElements(gl.TRIANGLES, figure.elementsLength, gl.UNSIGNED_SHORT, figure.elementsIndex * 2)
         checkError()
-    })
+    }
 
     //requestAnimationFrame(render);
 }
@@ -269,9 +300,11 @@ function UpdateSlidersFromSelectedFigure()
 
 function CreateFigureOnCanvas()
 {
+    var image = GenerateChessboardImage()
+    ConfigureTexture(image.image, image.width, image.height)
+
     //set slider to defaults
     var figureProps = new FigureProperties()
-    App.existingFigures.push(figureProps)
     App.selectedFigure = figureProps
 
     UpdateSlidersFromSelectedFigure()
